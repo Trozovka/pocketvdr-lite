@@ -25,9 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.trozovka.pocketvdr.core.entitlement.EntitlementHost
 import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
+import com.trozovka.pocketvdr.core.util.appDisplayName
+import com.trozovka.pocketvdr.core.util.appVersionName
 import com.trozovka.pocketvdr.core.util.formatDurationShort
 import com.trozovka.pocketvdr.core.util.formatLatLon
 import kotlinx.coroutines.delay
@@ -41,6 +44,7 @@ fun MainScreen(
     onViewVoyages: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val context = LocalContext.current
     val isRunning by VoyageLoggerService.isRunning.collectAsState()
     val startTimeMillis by VoyageLoggerService.startTimeMillis.collectAsState()
     val fixCount by VoyageLoggerService.fixCount.collectAsState()
@@ -131,6 +135,11 @@ fun MainScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
             Text("About", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "${appDisplayName(context)} v${appVersionName(context)}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
             Text(
                 "PocketVDR is a personal voyage data recorder -- it logs your position, speed, " +
                     "heading, and altitude offline throughout a voyage, so you have a real record " +
