@@ -29,16 +29,20 @@ phone's own GPS chip and local storage — no cloud round-trip, nothing that can
 boat is out of range.
 
 **What's free:**
-- Full logging — position, UTC time, speed, heading, altitude, at a configurable 5-60s interval
+- Full logging — position, UTC time, speed, heading, altitude, and satellites used, at a
+  configurable 5-60s interval
 - Runs as a real foreground service — keeps working with the screen locked, survives Doze/battery
   optimization once you grant the exemption
-- A big "Flag this moment" button — instantly tag a near-miss, weather event, or mechanical issue
+- Live telemetry while logging: fix count, elapsed voyage time, satellites used, current position
+- A big "Mark Incident" button — instantly tag a near-miss, weather event, or mechanical issue
   with a timestamp and optional note, findable later without scrubbing through hours of track
-- Distinct voyage sessions with a list of past voyages you can reopen
+- Distinct voyage sessions with a list of past voyages you can reopen or permanently delete
 - A review screen: track plotted on a simple offline canvas, a timeline scrubber, and a
-  tap-to-jump list of your flagged events
-- Export any voyage (or just a selected time range) as GPX or plain NMEA 0183 — opens in OpenCPN
-  or Google Earth, or hand it to an insurer/surveyor, though you never need either to use the app
+  tap-to-jump list of your marked events
+- Positions shown mariner-style — `xx.xxxxx N/S, yyy.yyyyy E/W` — not raw signed decimals
+- Export any voyage (or just a selected time range) as GPX, plain NMEA 0183, or a plain-text log
+  readable in Notepad/WordPad — GPX/NMEA open in OpenCPN, Google Earth, or ECDIS-class
+  chartplotters; the text log is for handing to an insurer or surveyor with no special software
 - Free for 30 days from first launch, with unlimited history review and export. After that,
   logging keeps working forever unlimited — only review/export narrows to the last 24 hours (or
   your current voyage). See PocketVDR Pro for unlimited history, permanently.

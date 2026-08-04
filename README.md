@@ -25,20 +25,27 @@ Developed by [Trozovka](https://github.com/Trozovka).
 
 ## Features
 
-- Logs position, UTC timestamp, speed, heading, and altitude at a configurable interval (default
-  7s, adjustable 5-60s in Settings) via `FusedLocationProviderClient` with a `LocationManager`
-  fallback
+- Logs position, UTC timestamp, speed, heading, altitude, and satellites used at a configurable
+  interval (default 7s, adjustable 5-60s in Settings) via `FusedLocationProviderClient` with a
+  `LocationManager` fallback, plus a live `GnssStatus` satellite count
 - Real Android foreground service with a partial wake lock -- keeps logging with the screen
   locked, survives Doze once you grant the battery-optimization exemption
-- A big **"Flag this moment"** button that instantly tags the current position with a timestamp
-  and an optional short note -- for a near-miss, weather event, or mechanical issue, findable
-  later without scrubbing through hours of track
-- Distinct "start voyage" / "stop voyage" sessions, with a list of past voyages you can reopen
+- Live telemetry while logging: fix count, elapsed voyage time, satellites used, and current
+  position
+- A big **"Mark Incident"** button that instantly tags the current position with a timestamp and
+  an optional short note -- for a near-miss, weather event, or mechanical issue, findable later
+  without scrubbing through hours of track
+- Distinct "start voyage" / "stop voyage" sessions, with a list of past voyages you can reopen or
+  permanently delete
 - Review screen: the track plotted on a simple offline canvas (deliberately not map tiles -- see
-  "Why no map tiles" below), a timeline scrubber, and a tap-to-jump list of flagged events
-- Export a selected time range (or the whole voyage) as GPX or as a plain NMEA 0183 text file --
-  useful for OpenCPN, Google Earth, or handing to an insurer/surveyor, but the app is fully useful
-  without ever opening any of those
+  "Why no map tiles" below), a timeline scrubber, and a tap-to-jump list of marked events
+- Positions are shown as `xx.xxxxx N/S, yyy.yyyyy E/W` throughout the app and in the plain-text
+  export, not raw signed decimal degrees -- negative latitude is South, negative longitude is
+  West, the standard convention, just spelled out instead of left as a bare sign
+- Export a selected time range (or the whole voyage) as GPX, plain NMEA 0183, or a plain-text log
+  readable in Notepad/WordPad -- GPX/NMEA for OpenCPN, Google Earth, or ECDIS-class chartplotters;
+  the plain-text log for handing to an insurer, surveyor, or anyone without navigation software.
+  The app is fully useful without ever opening any of those
 - Free for 30 days from first launch with unlimited history review/export; after that, logging
   stays unlimited forever, and review/export narrows to the last 24 hours or the current voyage --
   see [Licensing](#licensing) below
