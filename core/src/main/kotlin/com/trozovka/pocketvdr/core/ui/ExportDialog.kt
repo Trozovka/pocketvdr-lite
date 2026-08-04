@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RangeSlider
@@ -22,12 +23,13 @@ import com.trozovka.pocketvdr.core.data.FlagEventEntity
 import com.trozovka.pocketvdr.core.export.ExportFileSharer
 import com.trozovka.pocketvdr.core.export.GpxExporter
 import com.trozovka.pocketvdr.core.export.NmeaExporter
+import com.trozovka.pocketvdr.core.export.TextLogExporter
 import com.trozovka.pocketvdr.core.util.formatUtcTimestamp
 
 /**
- * Export a time range (or, left at its default full-width selection, the whole voyage) as GPX
- * or NMEA. Only fixes/flags falling inside the selected range are written -- a real subset
- * export, not a whole-voyage export with a decorative slider.
+ * Export a time range (or, left at its default full-width selection, the whole voyage) as GPX,
+ * NMEA, or a plain text log. Only fixes/flags falling inside the selected range are written --
+ * a real subset export, not a whole-voyage export with a decorative slider.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +58,12 @@ fun ExportDialog(
         return flags.filter { it.timestampMillis in fromMillis..toMillis }
     }
 
+    fun share(fileName: String, content: String, mimeType: String) {
+        val intent = ExportFileSharer.writeAndBuildShareIntent(context, fileName, content, mimeType)
+        context.startActivity(intent)
+        onDismiss()
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Export voyage") },
@@ -74,42 +82,57 @@ fun ExportDialog(
                     Text(
                         "${formatUtcTimestamp(startFix.timestampMillis)} -> ${formatUtcTimestamp(endFix.timestampMillis)}",
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp),
+                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
                     )
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val selected = selectedFixes()
-                val gpx = GpxExporter.build(voyageName, selected, selectedFlags(selected))
-                val intent = ExportFileSharer.writeAndBuildShareIntent(
-                    context = context,
-                    fileName = "$voyageName.gpx",
-                    content = gpx,
-                    mimeType = "application/gpx+xml",
+
+                ExportOptionRow(
+                    label = "Export as GPX",
+                    description = "For mapping tools like OpenCPN or Google Earth.",
+                    onClick = {
+                        val selected = selectedFixes()
+                        val gpx = GpxExporter.build(voyageName, selected, selectedFlags(selected))
+                        share("$voyageName.gpx", gpx, "application/gpx+xml")
+                    },
                 )
-                context.startActivity(intent)
-                onDismiss()
-            }) {
-                Text("Export as GPX")
+                ExportOptionRow(
+                    label = "Export as NMEA",
+                    description = "Raw position sentences, compatible with ECDIS/chartplotter systems like OpenCPN.",
+                    onClick = {
+                        val nmea = NmeaExporter.build(selectedFixes())
+                        share("$voyageName.nmea", nmea, "text/plain")
+                    },
+                )
+                ExportOptionRow(
+                    label = "Export as TXT",
+                    description = "A plain, readable log for Notepad, WordPad, or printing -- not for navigation software.",
+                    onClick = {
+                        val selected = selectedFixes()
+                        val text = TextLogExporter.build(voyageName, selected, selectedFlags(selected))
+                        share("$voyageName.txt", text, "text/plain")
+                    },
+                )
             }
         },
+        confirmButton = {},
         dismissButton = {
-            TextButton(onClick = {
-                val selected = selectedFixes()
-                val nmea = NmeaExporter.build(selected)
-                val intent = ExportFileSharer.writeAndBuildShareIntent(
-                    context = context,
-                    fileName = "$voyageName.nmea",
-                    content = nmea,
-                    mimeType = "text/plain",
-                )
-                context.startActivity(intent)
-                onDismiss()
-            }) {
-                Text("Export as NMEA")
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         },
     )
+}
+
+@Composable
+private fun ExportOptionRow(label: String, description: String, onClick: () -> Unit) {
+    Column(modifier = Modifier.padding(bottom = 12.dp)) {
+        Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(label)
+        }
+        Text(
+            description,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
 }

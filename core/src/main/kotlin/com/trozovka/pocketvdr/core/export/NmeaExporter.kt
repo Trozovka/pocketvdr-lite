@@ -10,8 +10,9 @@ import kotlin.math.floor
 /**
  * Pure NMEA 0183 builder (GGA + RMC per fix) for exported logs -- separate from any live-feed
  * formatter, since this is a batch export of already-recorded rows, not a real-time stream.
- * Fields this app never actually measured (satellite count, HDOP) are left empty rather than
- * fabricated, same principle as the sibling GPS Server project's formatter.
+ * Fields this app never actually measured (HDOP) are left empty rather than fabricated, same
+ * principle as the sibling GPS Server project's formatter -- satellite count IS measured
+ * (via GnssStatus), so that field is filled in when available.
  */
 object NmeaExporter {
 
@@ -29,7 +30,8 @@ object NmeaExporter {
         val (latField, latHemi) = formatLatitude(fix.latitude)
         val (lonField, lonHemi) = formatLongitude(fix.longitude)
         val altitude = fix.altitudeMeters?.let { "%.1f".format(Locale.US, it) } ?: ""
-        val body = "GPGGA,$time,$latField,$latHemi,$lonField,$lonHemi,1,,,$altitude,M,,M,,"
+        val satellites = fix.satellitesUsed?.let { "%02d".format(it) } ?: ""
+        val body = "GPGGA,$time,$latField,$latHemi,$lonField,$lonHemi,1,$satellites,,$altitude,M,,M,,"
         return "\$$body*${checksum(body)}\r\n"
     }
 

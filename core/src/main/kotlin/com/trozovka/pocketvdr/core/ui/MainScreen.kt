@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.trozovka.pocketvdr.core.entitlement.EntitlementHost
 import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
+import com.trozovka.pocketvdr.core.util.formatDurationShort
+import com.trozovka.pocketvdr.core.util.formatLatLon
+import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreen(
@@ -38,6 +42,7 @@ fun MainScreen(
     onOpenSettings: () -> Unit,
 ) {
     val isRunning by VoyageLoggerService.isRunning.collectAsState()
+    val startTimeMillis by VoyageLoggerService.startTimeMillis.collectAsState()
     val fixCount by VoyageLoggerService.fixCount.collectAsState()
     val latestFix by VoyageLoggerService.latestFix.collectAsState()
     val lastFlagId by VoyageLoggerService.lastFlagId.collectAsState()
@@ -45,6 +50,7 @@ fun MainScreen(
     var showNoteDialog by remember { mutableStateOf(false) }
     var noteText by remember { mutableStateOf("") }
     var statusMessage by remember { mutableStateOf("") }
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(lastFlagId) {
         if (lastFlagId != null) {
@@ -55,6 +61,13 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         statusMessage = EntitlementHost.current().statusMessage(System.currentTimeMillis())
+    }
+
+    LaunchedEffect(isRunning) {
+        while (isRunning) {
+            nowMillis = System.currentTimeMillis()
+            delay(1000)
+        }
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -75,9 +88,18 @@ fun MainScreen(
 
             Text(if (isRunning) "Logging voyage" else "Not logging", style = MaterialTheme.typography.titleMedium)
             Text("Fixes recorded: $fixCount", style = MaterialTheme.typography.bodyMedium)
+            if (isRunning && startTimeMillis != null) {
+                Text(
+                    "Elapsed: ${formatDurationShort(nowMillis - startTimeMillis!!)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            latestFix?.satellitesUsed?.let { satellites ->
+                Text("Satellites used: $satellites", style = MaterialTheme.typography.bodyMedium)
+            }
             latestFix?.let { fix ->
                 Text(
-                    "Last fix: %.5f, %.5f".format(fix.latitude, fix.longitude),
+                    "Last fix: ${formatLatLon(fix.latitude, fix.longitude)}",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -88,7 +110,7 @@ fun MainScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                 ) {
-                    Text("FLAG THIS MOMENT", color = Color.White)
+                    Text("MARK INCIDENT", color = Color.White)
                 }
                 OutlinedButton(onClick = onStopRequested, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
                     Text("Stop voyage")
@@ -106,6 +128,21 @@ fun MainScreen(
                 Text("Settings")
             }
 
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+            Text("About", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "PocketVDR is a personal voyage data recorder -- it logs your position, speed, " +
+                    "heading, and altitude offline throughout a voyage, so you have a real record " +
+                    "of what happened without needing a network connection.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+            )
+            Text(
+                "Developed by Trozovka -- github.com/Trozovka",
+                style = MaterialTheme.typography.bodySmall,
+            )
+
             if (statusMessage.isNotBlank()) {
                 Text(
                     statusMessage,
@@ -118,8 +155,11 @@ fun MainScreen(
 
     if (showNoteDialog) {
         AlertDialog(
-            onDismissRequest = { showNoteDialog = false },
-            title = { Text("Moment flagged") },
+            onDismissRequest = {
+                showNoteDialog = false
+                VoyageLoggerService.acknowledgeFlag()
+            },
+            title = { Text("Incident marked") },
             text = {
                 OutlinedTextField(
                     value = noteText,
@@ -132,12 +172,16 @@ fun MainScreen(
                 TextButton(onClick = {
                     lastFlagId?.let { onNoteSaved(it, noteText) }
                     showNoteDialog = false
+                    VoyageLoggerService.acknowledgeFlag()
                 }) {
                     Text("Save note")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showNoteDialog = false }) {
+                TextButton(onClick = {
+                    showNoteDialog = false
+                    VoyageLoggerService.acknowledgeFlag()
+                }) {
                     Text("Skip")
                 }
             },

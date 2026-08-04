@@ -104,9 +104,11 @@ class VoyageLoggerService : Service() {
         _fixCount.value = 0
 
         scope.launch {
-            val voyageId = database.voyageDao().insert(VoyageEntity(startTimeMillis = System.currentTimeMillis()))
+            val startTimeMillis = System.currentTimeMillis()
+            val voyageId = database.voyageDao().insert(VoyageEntity(startTimeMillis = startTimeMillis))
             activeVoyageId = voyageId
             _activeVoyageId.value = voyageId
+            _startTimeMillis.value = startTimeMillis
 
             locationSource = LocationSource(applicationContext, intervalMillis)
             locationSource.start()
@@ -137,6 +139,7 @@ class VoyageLoggerService : Service() {
                     speedMetersPerSecond = fix.speedMetersPerSecond,
                     headingDegrees = fix.headingDegrees,
                     altitudeMeters = fix.altitudeMeters,
+                    satellitesUsed = fix.satellitesUsed,
                 ),
             )
             buffer.size >= FLUSH_BATCH_SIZE
@@ -174,6 +177,7 @@ class VoyageLoggerService : Service() {
             _isRunning.value = false
             _activeVoyageId.value = null
             _latestFix.value = null
+            _startTimeMillis.value = null
             stopSelf()
         }
     }
@@ -218,8 +222,17 @@ class VoyageLoggerService : Service() {
         private val _isRunning = MutableStateFlow(false)
         val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
+        private val _startTimeMillis = MutableStateFlow<Long?>(null)
+        val startTimeMillis: StateFlow<Long?> = _startTimeMillis.asStateFlow()
+
         private val _lastFlagId = MutableStateFlow<Long?>(null)
         val lastFlagId: StateFlow<Long?> = _lastFlagId.asStateFlow()
+
+        /** Call once a flag event has been shown/handled in the UI, so navigating back to the
+         * main screen doesn't re-trigger the note dialog for an already-acknowledged event. */
+        fun acknowledgeFlag() {
+            _lastFlagId.value = null
+        }
 
         private val _activeVoyageId = MutableStateFlow<Long?>(null)
         val activeVoyageId: StateFlow<Long?> = _activeVoyageId.asStateFlow()

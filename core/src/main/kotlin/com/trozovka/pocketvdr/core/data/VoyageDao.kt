@@ -1,6 +1,7 @@
 package com.trozovka.pocketvdr.core.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -13,6 +14,10 @@ interface VoyageDao {
 
     @Update
     suspend fun update(voyage: VoyageEntity)
+
+    /** Cascades to that voyage's fixes and marked events via ForeignKey.CASCADE. */
+    @Delete
+    suspend fun delete(voyage: VoyageEntity)
 
     @Query("SELECT * FROM voyages ORDER BY startTimeMillis DESC")
     fun observeAll(): Flow<List<VoyageEntity>>

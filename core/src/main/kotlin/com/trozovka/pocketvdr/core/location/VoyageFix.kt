@@ -8,4 +8,5 @@ data class VoyageFix(
     val speedMetersPerSecond: Float?,
     val headingDegrees: Float?,
     val altitudeMeters: Double?,
+    val satellitesUsed: Int? = null,
 )

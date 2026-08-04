@@ -27,4 +27,5 @@ data class FixEntity(
     val speedMetersPerSecond: Float? = null,
     val headingDegrees: Float? = null,
     val altitudeMeters: Double? = null,
+    val satellitesUsed: Int? = null,
 )

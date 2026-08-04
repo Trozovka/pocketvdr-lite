@@ -2,9 +2,11 @@ package com.trozovka.pocketvdr.core.location
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
@@ -32,6 +34,8 @@ class LocationSource(private val context: Context, private val intervalMillis: L
     private val _fixes = MutableStateFlow<VoyageFix?>(null)
     val fixes: StateFlow<VoyageFix?> = _fixes.asStateFlow()
 
+    @Volatile
+    private var satellitesUsed: Int? = null
     private var usingFallback = false
 
     private val fusedClient by lazy { LocationServices.getFusedLocationProviderClient(context) }
@@ -47,7 +51,19 @@ class LocationSource(private val context: Context, private val intervalMillis: L
 
     private val fallbackListener = LocationListener { location -> onNewLocation(location) }
 
+    private val gnssStatusCallback = object : GnssStatus.Callback() {
+        override fun onSatelliteStatusChanged(status: GnssStatus) {
+            var used = 0
+            for (i in 0 until status.satelliteCount) {
+                if (status.usedInFix(i)) used++
+            }
+            satellitesUsed = used
+        }
+    }
+
     fun start() {
+        registerGnssStatusCallback()
+
         val playServicesAvailable = GoogleApiAvailability.getInstance()
             .isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS
 
@@ -92,7 +108,16 @@ class LocationSource(private val context: Context, private val intervalMillis: L
             speedMetersPerSecond = if (location.hasSpeed()) location.speed else null,
             headingDegrees = if (location.hasBearing()) location.bearing else null,
             altitudeMeters = if (location.hasAltitude()) location.altitude else null,
+            satellitesUsed = satellitesUsed,
         )
+    }
+
+    private fun registerGnssStatusCallback() {
+        try {
+            locationManager.registerGnssStatusCallback(gnssStatusCallback, Handler(Looper.getMainLooper()))
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not register GNSS status callback", e)
+        }
     }
 
     fun stop() {
@@ -100,6 +125,7 @@ class LocationSource(private val context: Context, private val intervalMillis: L
         if (usingFallback) {
             locationManager.removeUpdates(fallbackListener)
         }
+        locationManager.unregisterGnssStatusCallback(gnssStatusCallback)
     }
 
     companion object {

@@ -60,6 +60,14 @@ class NmeaExporterTest {
     }
 
     @Test
+    fun `satellite count is included in GGA when measured`() {
+        val fixWithSatellites = sampleFix.copy(satellitesUsed = 8)
+        val output = NmeaExporter.build(listOf(fixWithSatellites))
+        val ggaLine = output.split("\r\n").first { it.startsWith("\$GPGGA") }
+        assertTrue(ggaLine.contains(",1,08,,"))
+    }
+
+    @Test
     fun `every sentence ends with a valid two-digit hex checksum`() {
         val output = NmeaExporter.build(listOf(sampleFix))
         val checksumPattern = Regex("\\*[0-9A-F]{2}\\r\\n")

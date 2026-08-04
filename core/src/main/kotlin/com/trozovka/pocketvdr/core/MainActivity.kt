@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.Review -> ReviewScreen(
                         voyageId = current.voyageId,
                         onBack = { screen = Screen.VoyageList },
+                        onVoyageDeleted = { screen = Screen.VoyageList },
                     )
                     is Screen.Settings -> SettingsScreen(onBack = { screen = Screen.Main })
                 }

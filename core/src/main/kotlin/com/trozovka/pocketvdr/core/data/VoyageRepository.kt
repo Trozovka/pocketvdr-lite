@@ -24,4 +24,8 @@ class VoyageRepository(context: Context) {
     suspend fun updateFlagNote(flagId: Long, note: String) {
         database.flagEventDao().updateNote(flagId, note.takeIf { it.isNotBlank() })
     }
+
+    suspend fun deleteVoyage(voyage: VoyageEntity) {
+        database.voyageDao().delete(voyage)
+    }
 }

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [VoyageEntity::class, FixEntity::class, FlagEventEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class PocketVdrDatabase : RoomDatabase() {

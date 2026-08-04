@@ -39,6 +39,7 @@ object GpxExporter {
             builder.append("      <trkpt lat=\"${fix.latitude}\" lon=\"${fix.longitude}\">\n")
             fix.altitudeMeters?.let { builder.append("        <ele>$it</ele>\n") }
             builder.append("        <time>${isoTime(fix.timestampMillis)}</time>\n")
+            fix.satellitesUsed?.let { builder.append("        <sat>$it</sat>\n") }
             builder.append("      </trkpt>\n")
         }
         builder.append("    </trkseg>\n")
@@ -48,7 +49,7 @@ object GpxExporter {
     }
 
     private fun flagLabel(flag: FlagEventEntity): String =
-        flag.note?.takeIf { it.isNotBlank() } ?: "Flagged moment"
+        flag.note?.takeIf { it.isNotBlank() } ?: "Marked moment"
 
     private fun isoTime(millis: Long): String = Instant.ofEpochMilli(millis).toString()
 
