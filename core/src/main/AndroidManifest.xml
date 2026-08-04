@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      No INTERNET permission here on purpose: the logging path has zero network dependency
+      (see the project's non-negotiable #1). All location/foreground-service/wake-lock/battery
+      permissions come from the :reliability module dependency's own manifest.
+    -->
+</manifest>
