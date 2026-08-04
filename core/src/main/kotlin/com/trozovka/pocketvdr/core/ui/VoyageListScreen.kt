@@ -20,13 +20,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.trozovka.pocketvdr.core.data.VoyageRepository
+import com.trozovka.pocketvdr.core.entitlement.EntitlementHost
+import com.trozovka.pocketvdr.core.entitlement.isVoyageLocked
+import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
 import com.trozovka.pocketvdr.core.util.formatDurationShort
 import com.trozovka.pocketvdr.core.util.formatLocalTimestamp
 
@@ -36,6 +42,12 @@ fun VoyageListScreen(onBack: () -> Unit, onVoyageSelected: (Long) -> Unit) {
     val context = LocalContext.current
     val repository = remember { VoyageRepository(context) }
     val voyages by repository.observeVoyages().collectAsState(initial = emptyList())
+    val activeVoyageId by VoyageLoggerService.activeVoyageId.collectAsState()
+    var cutoffMillis by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(Unit) {
+        cutoffMillis = EntitlementHost.current().historicalAccessCutoffMillis(System.currentTimeMillis())
+    }
 
     Scaffold(
         topBar = {
@@ -57,6 +69,7 @@ fun VoyageListScreen(onBack: () -> Unit, onVoyageSelected: (Long) -> Unit) {
         } else {
             LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
                 items(voyages) { voyage ->
+                    val locked = isVoyageLocked(voyage, activeVoyageId, cutoffMillis)
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -77,6 +90,13 @@ fun VoyageListScreen(onBack: () -> Unit, onVoyageSelected: (Long) -> Unit) {
                                         "In progress"
                                     },
                                     style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            if (locked) {
+                                Text(
+                                    "Pro",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.error,
                                 )
                             }
                         }

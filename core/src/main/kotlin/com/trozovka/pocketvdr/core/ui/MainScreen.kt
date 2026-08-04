@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.trozovka.pocketvdr.core.entitlement.EntitlementHost
 import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
 
 @Composable
@@ -34,6 +35,7 @@ fun MainScreen(
     onFlagTapped: () -> Unit,
     onNoteSaved: (flagId: Long, note: String) -> Unit,
     onViewVoyages: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val isRunning by VoyageLoggerService.isRunning.collectAsState()
     val fixCount by VoyageLoggerService.fixCount.collectAsState()
@@ -42,12 +44,17 @@ fun MainScreen(
 
     var showNoteDialog by remember { mutableStateOf(false) }
     var noteText by remember { mutableStateOf("") }
+    var statusMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(lastFlagId) {
         if (lastFlagId != null) {
             noteText = ""
             showNoteDialog = true
         }
+    }
+
+    LaunchedEffect(Unit) {
+        statusMessage = EntitlementHost.current().statusMessage(System.currentTimeMillis())
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -94,6 +101,17 @@ fun MainScreen(
 
             TextButton(onClick = onViewVoyages, modifier = Modifier.padding(top = 12.dp)) {
                 Text("View past voyages")
+            }
+            TextButton(onClick = onOpenSettings) {
+                Text("Settings")
+            }
+
+            if (statusMessage.isNotBlank()) {
+                Text(
+                    statusMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
             }
         }
     }

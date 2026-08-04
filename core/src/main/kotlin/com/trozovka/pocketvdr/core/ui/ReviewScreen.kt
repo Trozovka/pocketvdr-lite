@@ -32,7 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.trozovka.pocketvdr.core.data.VoyageEntity
 import com.trozovka.pocketvdr.core.data.VoyageRepository
+import com.trozovka.pocketvdr.core.entitlement.EntitlementHost
+import com.trozovka.pocketvdr.core.entitlement.isVoyageLocked
+import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
 import com.trozovka.pocketvdr.core.util.formatFileTimestamp
 import com.trozovka.pocketvdr.core.util.formatUtcTimestamp
 
@@ -43,15 +47,22 @@ fun ReviewScreen(voyageId: Long, onBack: () -> Unit) {
     val repository = remember { VoyageRepository(context) }
     val fixes by repository.observeFixesForVoyage(voyageId).collectAsState(initial = emptyList())
     val flags by repository.observeFlagsForVoyage(voyageId).collectAsState(initial = emptyList())
+    val activeVoyageId by VoyageLoggerService.activeVoyageId.collectAsState()
     var selectedIndex by remember { mutableStateOf(0) }
     var showExportDialog by remember { mutableStateOf(false) }
     var voyageLabel by remember { mutableStateOf("voyage") }
+    var voyage by remember { mutableStateOf<VoyageEntity?>(null) }
+    var cutoffMillis by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(voyageId) {
-        repository.getVoyage(voyageId)?.let { voyage ->
-            voyageLabel = "PocketVDR_" + formatFileTimestamp(voyage.startTimeMillis)
+        repository.getVoyage(voyageId)?.let {
+            voyage = it
+            voyageLabel = "PocketVDR_" + formatFileTimestamp(it.startTimeMillis)
         }
+        cutoffMillis = EntitlementHost.current().historicalAccessCutoffMillis(System.currentTimeMillis())
     }
+
+    val locked = voyage?.let { isVoyageLocked(it, activeVoyageId, cutoffMillis) } ?: false
 
     Scaffold(
         topBar = {
@@ -63,7 +74,7 @@ fun ReviewScreen(voyageId: Long, onBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    if (fixes.isNotEmpty()) {
+                    if (fixes.isNotEmpty() && !locked) {
                         IconButton(onClick = { showExportDialog = true }) {
                             Icon(Icons.Filled.Share, contentDescription = "Export")
                         }
@@ -74,7 +85,14 @@ fun ReviewScreen(voyageId: Long, onBack: () -> Unit) {
     ) { padding ->
         Surface(modifier = Modifier.padding(padding).fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                if (fixes.isEmpty()) {
+                if (locked) {
+                    Text(
+                        "This voyage is older than the last 24 hours. Upgrade to PocketVDR Pro to review " +
+                            "and export your full voyage history -- logging itself is always free and unlimited.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                } else if (fixes.isEmpty()) {
                     Text(
                         "No fixes recorded for this voyage.",
                         modifier = Modifier.padding(16.dp),
@@ -110,6 +128,7 @@ fun ReviewScreen(voyageId: Long, onBack: () -> Unit) {
                     }
                 }
 
+                if (!locked) {
                 Text(
                     "Flagged events (${flags.size})",
                     style = MaterialTheme.typography.titleSmall,
@@ -137,6 +156,7 @@ fun ReviewScreen(voyageId: Long, onBack: () -> Unit) {
                             }
                         }
                     }
+                }
                 }
             }
         }

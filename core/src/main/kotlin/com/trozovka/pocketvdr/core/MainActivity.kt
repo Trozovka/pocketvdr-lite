@@ -17,6 +17,7 @@ import com.trozovka.pocketvdr.core.logging.VoyageLoggerService
 import com.trozovka.pocketvdr.core.settings.AppPreferences
 import com.trozovka.pocketvdr.core.ui.MainScreen
 import com.trozovka.pocketvdr.core.ui.ReviewScreen
+import com.trozovka.pocketvdr.core.ui.SettingsScreen
 import com.trozovka.pocketvdr.core.ui.VoyageListScreen
 import com.trozovka.toolkit.reliability.LocationReliabilityPermissionFlow
 import kotlinx.coroutines.launch
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 private sealed class Screen {
     object Main : Screen()
     object VoyageList : Screen()
+    object Settings : Screen()
     data class Review(val voyageId: Long) : Screen()
 }
 
@@ -55,6 +57,7 @@ class MainActivity : ComponentActivity() {
                             lifecycleScope.launch { repository.updateFlagNote(flagId, note) }
                         },
                         onViewVoyages = { screen = Screen.VoyageList },
+                        onOpenSettings = { screen = Screen.Settings },
                     )
                     is Screen.VoyageList -> VoyageListScreen(
                         onBack = { screen = Screen.Main },
@@ -64,6 +67,7 @@ class MainActivity : ComponentActivity() {
                         voyageId = current.voyageId,
                         onBack = { screen = Screen.VoyageList },
                     )
+                    is Screen.Settings -> SettingsScreen(onBack = { screen = Screen.Main })
                 }
             }
         }
