@@ -5,4 +5,11 @@
       (see the project's non-negotiable #1). All location/foreground-service/wake-lock/battery
       permissions come from the :reliability module dependency's own manifest.
     -->
+
+    <application>
+        <service
+            android:name="com.trozovka.pocketvdr.core.logging.VoyageLoggerService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+    </application>
 </manifest>
