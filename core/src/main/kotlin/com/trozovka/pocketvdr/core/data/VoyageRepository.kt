@@ -9,6 +9,8 @@ class VoyageRepository(context: Context) {
 
     fun observeVoyages(): Flow<List<VoyageEntity>> = database.voyageDao().observeAll()
 
+    suspend fun getVoyage(voyageId: Long): VoyageEntity? = database.voyageDao().getById(voyageId)
+
     fun observeFixesForVoyage(voyageId: Long): Flow<List<FixEntity>> =
         database.fixDao().observeForVoyage(voyageId)
 

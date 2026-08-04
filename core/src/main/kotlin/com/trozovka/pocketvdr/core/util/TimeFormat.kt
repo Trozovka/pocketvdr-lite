@@ -5,6 +5,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+private val FILE_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
+
+fun formatFileTimestamp(millis: Long): String =
+    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(FILE_TIMESTAMP_FORMATTER)
 
 fun formatUtcTimestamp(millis: Long): String =
     Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).format(DATE_TIME_FORMATTER) + " UTC"
