@@ -102,11 +102,14 @@ fun MainScreen(
             latestFix?.satellitesUsed?.let { satellites ->
                 Text("Satellites used: $satellites", style = MaterialTheme.typography.bodyMedium)
             }
-            latestFix?.let { fix ->
+            val fixForDisplay = latestFix
+            if (fixForDisplay != null) {
                 Text(
-                    "Last fix: ${formatLatLon(fix.latitude, fix.longitude)}",
+                    "Last fix: ${formatLatLon(fixForDisplay.latitude, fixForDisplay.longitude)}",
                     style = MaterialTheme.typography.bodyMedium,
                 )
+            } else if (isRunning) {
+                Text("Acquiring GPS fix...", style = MaterialTheme.typography.bodyMedium)
             }
 
             if (isRunning) {
