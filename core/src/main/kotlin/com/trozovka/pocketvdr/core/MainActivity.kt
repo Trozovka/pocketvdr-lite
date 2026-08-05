@@ -2,6 +2,7 @@ package com.trozovka.pocketvdr.core
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -19,6 +20,7 @@ import com.trozovka.pocketvdr.core.ui.MainScreen
 import com.trozovka.pocketvdr.core.ui.ReviewScreen
 import com.trozovka.pocketvdr.core.ui.SettingsScreen
 import com.trozovka.pocketvdr.core.ui.VoyageListScreen
+import com.trozovka.pocketvdr.core.util.appDisplayName
 import com.trozovka.toolkit.reliability.LocationReliabilityPermissionFlow
 import kotlinx.coroutines.launch
 
@@ -37,6 +39,14 @@ class MainActivity : ComponentActivity() {
     private val permissionFlow = LocationReliabilityPermissionFlow(
         activity = this,
         onReady = ::startLogging,
+        onDenied = {
+            Toast.makeText(
+                this,
+                "Location permission is needed to log a voyage. Grant it in Settings > Apps > " +
+                    "${appDisplayName(this)} > Permissions, then try again.",
+                Toast.LENGTH_LONG,
+            ).show()
+        },
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

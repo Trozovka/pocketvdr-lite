@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.trozovka.pocketvdr.core.data.FixEntity
 import com.trozovka.pocketvdr.core.data.FlagEventEntity
@@ -104,26 +105,35 @@ class VoyageLoggerService : Service() {
         _fixCount.value = 0
 
         scope.launch {
-            val startTimeMillis = System.currentTimeMillis()
-            val voyageId = database.voyageDao().insert(VoyageEntity(startTimeMillis = startTimeMillis))
-            activeVoyageId = voyageId
-            _activeVoyageId.value = voyageId
-            _startTimeMillis.value = startTimeMillis
+            try {
+                val startTimeMillis = System.currentTimeMillis()
+                val voyageId = database.voyageDao().insert(VoyageEntity(startTimeMillis = startTimeMillis))
+                activeVoyageId = voyageId
+                _activeVoyageId.value = voyageId
+                _startTimeMillis.value = startTimeMillis
 
-            locationSource = LocationSource(applicationContext, intervalMillis)
-            locationSource.start()
+                locationSource = LocationSource(applicationContext, intervalMillis)
+                locationSource.start()
 
-            launch {
-                locationSource.fixes.collect { fix ->
-                    fix?.let { onNewFix(voyageId, it) }
+                launch {
+                    locationSource.fixes.collect { fix ->
+                        fix?.let { onNewFix(voyageId, it) }
+                    }
                 }
-            }
 
-            flushJob = launch {
-                while (isActive) {
-                    delay(FLUSH_INTERVAL_MILLIS)
-                    flush()
+                flushJob = launch {
+                    while (isActive) {
+                        delay(FLUSH_INTERVAL_MILLIS)
+                        flush()
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start voyage logging", e)
+                _errorMessage.value = "Couldn't start logging -- device storage may be full or " +
+                    "unavailable. Free up space and try again."
+                _isRunning.value = false
+                wakeLock.release()
+                stopSelf()
             }
         }
     }
@@ -155,8 +165,14 @@ class VoyageLoggerService : Service() {
             buffer.clear()
             copy
         }
-        database.fixDao().insertAll(toWrite)
-        _fixCount.value = _fixCount.value + toWrite.size
+        try {
+            database.fixDao().insertAll(toWrite)
+            _fixCount.value = _fixCount.value + toWrite.size
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save ${toWrite.size} recorded fix(es)", e)
+            _errorMessage.value = "Couldn't save some recorded positions -- device storage may be " +
+                "full. Logging is continuing; free up space soon to avoid losing more."
+        }
     }
 
     private fun stopLogging() {
@@ -211,6 +227,7 @@ class VoyageLoggerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val TAG = "VoyageLoggerService"
         private const val CHANNEL_ID = "voyage_logger_channel"
         private const val NOTIFICATION_ID = 1
         private const val FLUSH_INTERVAL_MILLIS = 30_000L
@@ -242,5 +259,14 @@ class VoyageLoggerService : Service() {
 
         private val _latestFix = MutableStateFlow<VoyageFix?>(null)
         val latestFix: StateFlow<VoyageFix?> = _latestFix.asStateFlow()
+
+        /** Plain-language message for a save/start failure (e.g. storage full). Cleared once
+         * acknowledged so it doesn't reappear after the user has seen it. */
+        private val _errorMessage = MutableStateFlow<String?>(null)
+        val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+        fun acknowledgeError() {
+            _errorMessage.value = null
+        }
     }
 }

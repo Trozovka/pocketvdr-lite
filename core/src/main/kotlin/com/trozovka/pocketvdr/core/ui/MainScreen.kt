@@ -50,6 +50,7 @@ fun MainScreen(
     val fixCount by VoyageLoggerService.fixCount.collectAsState()
     val latestFix by VoyageLoggerService.latestFix.collectAsState()
     val lastFlagId by VoyageLoggerService.lastFlagId.collectAsState()
+    val loggingError by VoyageLoggerService.errorMessage.collectAsState()
 
     var showNoteDialog by remember { mutableStateOf(false) }
     var noteText by remember { mutableStateOf("") }
@@ -158,6 +159,18 @@ fun MainScreen(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 16.dp),
                 )
+            }
+
+            loggingError?.let { message ->
+                Text(
+                    message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                TextButton(onClick = { VoyageLoggerService.acknowledgeError() }) {
+                    Text("Dismiss")
+                }
             }
         }
     }
