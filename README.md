@@ -52,7 +52,7 @@ Developed by [Trozovka](https://github.com/Trozovka).
 
 ## Quick install (no building required)
 
-Download the APK from Gumroad and sideload it: **[Gumroad link once published]** ($0)
+Download the APK from Gumroad and sideload it: **[trozovka.gumroad.com/l/pocket-vdr-lite](https://trozovka.gumroad.com/l/pocket-vdr-lite)** ($0)
 
 Since this isn't distributed through Google Play, Android will ask you to allow installing from
 this source the first time -- that's expected.
@@ -103,8 +103,9 @@ itself never stops working or gets limited -- only review/export of anything old
 ## Pro version
 
 A Pro version with unlimited historical review/export (one-time purchase) is available
-separately: **[Gumroad link once published]**. The Pro app's source is private; this Free repo
-has the full free-tier source, openly available under the MIT license below.
+separately: **[trozovka.gumroad.com/l/pocket-vdr-pro](https://trozovka.gumroad.com/l/pocket-vdr-pro)**.
+The Pro app's source is private; this Free repo has the full free-tier source, openly available
+under the MIT license below.
 
 ## License
 
